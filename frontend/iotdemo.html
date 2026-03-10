@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>SmartAttend – IoT System Demo</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #f5f0eb;
+      --surface:      #fdfaf7;
+      --surface-2:    #f0e9e0;
+      --border:       #ddd0c0;
+      --border-hi:    #c9b89e;
+      --maroon:       #7c1c2e;
+      --maroon-dark:  #5e1222;
+      --maroon-light: #f9f0f2;
+      --green:        #2d6a4f;
+      --green-light:  #edf7f2;
+      --green-border: #a8d5bc;
+      --amber:        #92400e;
+      --amber-light:  #fffbeb;
+      --amber-border: #fcd34d;
+      --text-hi:      #1e0a10;
+      --text-mid:     #6b4a52;
+      --text-lo:      #a8897a;
+      --radius:       14px;
+      --radius-sm:    9px;
+      --shadow-sm:    0 1px 3px rgba(30,10,16,0.07);
+      --shadow-md:    0 4px 14px rgba(30,10,16,0.09), 0 2px 4px rgba(30,10,16,0.05);
+      --shadow-lg:    0 12px 36px rgba(30,10,16,0.12), 0 4px 8px rgba(30,10,16,0.06);
+    }
+
+    body {
+      font-family: 'Outfit', sans-serif;
+      background: var(--bg);
+      color: var(--text-hi);
+      min-height: 100vh;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: radial-gradient(circle, #c4aa90 1px, transparent 1px);
+      background-size: 28px 28px;
+      opacity: 0.3;
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      height: 58px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      background: rgba(253,250,247,0.92);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; }
+    .brand-mark {
+      width: 30px; height: 30px; background: var(--maroon);
+      border-radius: 8px; display: grid; place-items: center;
+      box-shadow: 0 2px 8px rgba(124,28,46,0.32);
+    }
+    .brand-mark svg { width: 15px; height: 15px; }
+    .brand-name { font-family: 'Syne', sans-serif; font-size: 15px; font-weight: 700; color: var(--text-hi); }
+    .brand-name em { font-style: normal; color: var(--maroon); }
+
+    .nav-right { display: flex; align-items: center; gap: 6px; }
+    .nav-a {
+      font-size: 13px; font-weight: 500; color: var(--text-mid);
+      text-decoration: none; padding: 5px 12px; border-radius: var(--radius-sm);
+      transition: all 0.14s;
+    }
+    .nav-a:hover { color: var(--maroon); background: var(--maroon-light); }
+    .nav-a.on    { color: var(--maroon); background: var(--maroon-light); font-weight: 600; }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 64px 24px 48px;
+      max-width: 720px; margin: 0 auto;
+      animation: up 0.5s ease both;
+    }
+    @keyframes up { from{opacity:0;transform:translateY(14px)} to{opacity:1;transform:translateY(0)} }
+
+    .hero-tag {
+      display: inline-flex; align-items: center; gap: 7px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--maroon); margin-bottom: 18px;
+      background: var(--maroon-light); border: 1px solid rgba(124,28,46,0.2);
+      padding: 5px 14px; border-radius: 20px;
+    }
+    .hero-tag::before {
+      content: ''; width: 6px; height: 6px; border-radius: 50%;
+      background: var(--maroon); animation: blink 2s infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: 42px; font-weight: 800; letter-spacing: -0.03em;
+      color: var(--text-hi); line-height: 1.1; margin-bottom: 16px;
+    }
+    .hero h1 span { color: var(--maroon); }
+
+    .hero p {
+      font-size: 15px; color: var(--text-mid); line-height: 1.65;
+      max-width: 540px; margin: 0 auto 28px;
+    }
+
+    .hero-chips { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; }
+    .chip {
+      font-size: 12px; font-weight: 500; padding: 5px 13px; border-radius: 20px;
+      border: 1px solid var(--border); background: var(--surface); color: var(--text-mid);
+    }
+    .chip.hi { background: var(--maroon-light); border-color: rgba(124,28,46,0.2); color: var(--maroon); }
+
+    /* ── SECTION WRAPPER ── */
+    .section {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto;
+      padding: 0 24px 60px;
+    }
+
+    .section-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--maroon); margin-bottom: 8px;
+    }
+    .section-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 700; letter-spacing: -0.02em;
+      color: var(--text-hi); margin-bottom: 6px;
+    }
+    .section-sub { font-size: 13.5px; color: var(--text-mid); margin-bottom: 28px; line-height: 1.55; }
+
+    /* ── FLOW DIAGRAM ── */
+    .flow {
+      display: flex; align-items: center; justify-content: center;
+      gap: 0; flex-wrap: nowrap; overflow-x: auto;
+      padding: 32px 8px; margin-bottom: 8px;
+    }
+
+    .flow-node {
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      flex-shrink: 0;
+      animation: up 0.5s ease both;
+    }
+    .flow-node:nth-child(1) { animation-delay: 0.05s; }
+    .flow-node:nth-child(3) { animation-delay: 0.10s; }
+    .flow-node:nth-child(5) { animation-delay: 0.15s; }
+    .flow-node:nth-child(7) { animation-delay: 0.20s; }
+    .flow-node:nth-child(9) { animation-delay: 0.25s; }
+
+    .node-box {
+      width: 100px; height: 100px;
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 8px;
+      box-shadow: var(--shadow-md);
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+      cursor: default;
+    }
+    .node-box:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); }
+
+    .node-box.active {
+      border-color: rgba(124,28,46,0.35);
+      background: var(--maroon-light);
+    }
+    .node-box.active::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(circle at 50% 0%, rgba(124,28,46,0.08) 0%, transparent 70%);
+    }
+
+    .node-img {
+      width: 52px; height: 52px; object-fit: contain;
+      position: relative; z-index: 1;
+    }
+
+    .node-icon {
+      width: 40px; height: 40px;
+      display: grid; place-items: center;
+      position: relative; z-index: 1;
+    }
+    .node-icon svg { width: 32px; height: 32px; }
+
+    .node-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.01em;
+      color: var(--text-hi); text-align: center; line-height: 1.3;
+    }
+    .node-box.active .node-label { color: var(--maroon); }
+
+    .node-sub {
+      font-size: 11px; color: var(--text-lo); text-align: center;
+      max-width: 90px; line-height: 1.4; margin-top: 6px;
+    }
+
+    /* animated arrow between nodes */
+    .flow-arrow {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 4px; flex-shrink: 0; padding: 0 4px;
+    }
+
+    .arrow-line {
+      width: 48px; height: 2px;
+      background: linear-gradient(90deg, var(--border), var(--maroon), var(--border));
+      background-size: 200% 100%;
+      animation: flowAnim 2s linear infinite;
+      border-radius: 1px;
+    }
+    @keyframes flowAnim {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    .arrow-head {
+      width: 0; height: 0;
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+      border-left: 8px solid var(--maroon);
+      margin-left: 44px; margin-top: -8px;
+    }
+
+    .arrow-label {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 9px; color: var(--text-lo);
+      letter-spacing: 0.04em; white-space: nowrap;
+      margin-top: 6px;
+    }
+
+    /* ── STEP CARDS ── */
+    .steps { display: flex; flex-direction: column; gap: 16px; }
+
+    .step-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 24px;
+      display: grid; grid-template-columns: 48px 1fr;
+      gap: 20px; align-items: start;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s, box-shadow 0.15s;
+      animation: up 0.45s ease both;
+    }
+    .step-card:hover { transform: translateX(4px); box-shadow: var(--shadow-md); }
+    .step-card:nth-child(1){ animation-delay:0.04s }
+    .step-card:nth-child(2){ animation-delay:0.08s }
+    .step-card:nth-child(3){ animation-delay:0.12s }
+    .step-card:nth-child(4){ animation-delay:0.16s }
+    .step-card:nth-child(5){ animation-delay:0.20s }
+
+    .step-num {
+      width: 48px; height: 48px;
+      background: var(--maroon); color: white;
+      border-radius: 12px;
+      display: grid; place-items: center;
+      font-family: 'Syne', sans-serif;
+      font-size: 18px; font-weight: 700;
+      flex-shrink: 0;
+      box-shadow: 0 4px 12px rgba(124,28,46,0.25);
+    }
+
+    .step-content {}
+    .step-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700; color: var(--text-hi);
+      margin-bottom: 5px;
+    }
+    .step-desc { font-size: 13.5px; color: var(--text-mid); line-height: 1.6; }
+
+    .step-tag {
+      display: inline-block;
+      margin-top: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px; font-weight: 500; letter-spacing: 0.06em;
+      padding: 3px 9px; border-radius: 6px;
+      background: var(--amber-light); border: 1px solid var(--amber-border); color: var(--amber);
+    }
+    .step-tag.green { background: var(--green-light); border-color: var(--green-border); color: var(--green); }
+    .step-tag.maroon { background: var(--maroon-light); border-color: rgba(124,28,46,0.2); color: var(--maroon); }
+
+    /* ── HARDWARE SECTION ── */
+    .hw-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .hw-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+      transition: transform 0.15s, box-shadow 0.15s;
+      animation: up 0.45s ease both;
+    }
+    .hw-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
+    .hw-card:nth-child(1){ animation-delay:0.04s }
+    .hw-card:nth-child(2){ animation-delay:0.08s }
+    .hw-card:nth-child(3){ animation-delay:0.12s }
+
+    .hw-img-box {
+      background: linear-gradient(160deg, #fdf8f4, #f0e5d8);
+      padding: 28px 20px;
+      display: flex; align-items: center; justify-content: center;
+      border-bottom: 1px solid var(--border);
+      min-height: 160px;
+    }
+
+    .hw-img-box img {
+      max-width: 120px; max-height: 120px;
+      object-fit: contain; filter: drop-shadow(0 4px 12px rgba(30,10,16,0.12));
+    }
+
+    /* SVG placeholder when no image */
+    .hw-svg {
+      width: 80px; height: 80px; opacity: 0.6;
+    }
+
+    .hw-info { padding: 16px 18px; }
+    .hw-name {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700; color: var(--text-hi); margin-bottom: 4px;
+    }
+    .hw-desc { font-size: 12.5px; color: var(--text-mid); line-height: 1.5; margin-bottom: 10px; }
+    .hw-spec {
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 10.5px; color: var(--text-lo);
+      display: flex; flex-direction: column; gap: 2px;
+    }
+
+    /* ── SIMULATION NOTE ── */
+    .sim-note {
+      background: var(--maroon-light);
+      border: 1.5px solid rgba(124,28,46,0.2);
+      border-radius: var(--radius);
+      padding: 20px 24px;
+      display: flex; gap: 16px; align-items: flex-start;
+      margin-bottom: 60px;
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto 60px;
+      animation: up 0.45s 0.2s ease both;
+    }
+    .sim-note-icon {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: var(--maroon); border-radius: 9px;
+      display: grid; place-items: center;
+    }
+    .sim-note-icon svg { width: 18px; height: 18px; }
+    .sim-note-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700; color: var(--maroon); margin-bottom: 5px;
+    }
+    .sim-note-text { font-size: 13px; color: var(--text-mid); line-height: 1.6; }
+
+    /* ── LIVE DEMO BUTTON ── */
+    .demo-row {
+      display: flex; justify-content: center; gap: 12px;
+      padding-bottom: 60px;
+      position: relative; z-index: 1;
+    }
+
+    .demo-btn {
+      font-family: 'Syne', sans-serif;
+      font-size: 14px; font-weight: 700;
+      padding: 12px 28px; border-radius: var(--radius-sm);
+      cursor: pointer; transition: all 0.14s;
+      display: flex; align-items: center; gap: 8px;
+      text-decoration: none;
+    }
+    .demo-btn.primary {
+      background: var(--maroon); color: white; border: none;
+      box-shadow: 0 4px 18px rgba(124,28,46,0.28);
+    }
+    .demo-btn.primary:hover { background: var(--maroon-dark); transform: translateY(-1px); box-shadow: 0 8px 28px rgba(124,28,46,0.36); }
+    .demo-btn.secondary {
+      background: var(--surface); color: var(--maroon);
+      border: 1.5px solid rgba(124,28,46,0.3);
+    }
+    .demo-btn.secondary:hover { background: var(--maroon-light); }
+    .demo-btn svg { width: 16px; height: 16px; }
+
+    /* ── DIVIDER ── */
+    .divider {
+      position: relative; z-index: 1;
+      max-width: 960px; margin: 0 auto 48px;
+      border: none; border-top: 1px solid var(--border);
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative; z-index: 1;
+      border-top: 1px solid var(--border); padding: 15px 28px;
+      background: rgba(253,250,247,0.8); backdrop-filter: blur(10px);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .foot { font-size: 11.5px; color: var(--text-lo); }
+    .foot-mode {
+      font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text-lo);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .foot-mode span {
+      background: var(--amber-light); border: 1px solid var(--amber-border);
+      border-radius: 4px; padding: 1px 7px; color: var(--amber);
+    }
+
+    @media (max-width: 700px) {
+      .hw-grid { grid-template-columns: 1fr; }
+      .flow { gap: 0; }
+      .arrow-line { width: 28px; }
+      .hero h1 { font-size: 30px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="brand" href="#">
+    <div class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="2" y="5" width="20" height="14" rx="2"/>
+        <line x1="2" y1="10" x2="22" y2="10"/>
+      </svg>
+    </div>
+    <span class="brand-name">Smart<em>Attend</em></span>
+  </a>
+  <div class="nav-right">
+    <a href="scan.html" class="nav-a">Scan</a>
+    <a href="dashboard.html" class="nav-a">Dashboard</a>
+    <a href="#" class="nav-a on">IoT Demo</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-tag">IoT System Simulation</div>
+  <h1>How the <span>RFID System</span><br/>Actually Works</h1>
+  <p>A complete walkthrough of the IoT data flow — from card tap to cloud database to faculty dashboard. Hardware components shown below are part of the final implementation.</p>
+  <div class="hero-chips">
+    <span class="chip hi">ESP32 Microcontroller</span>
+    <span class="chip hi">RC522 RFID Reader</span>
+    <span class="chip">Firebase Cloud</span>
+    <span class="chip">Web Dashboard</span>
+    <span class="chip">Anti-Proxy Logic</span>
+  </div>
+</div>
+
+<!-- FLOW DIAGRAM -->
+<div class="section">
+  <div class="section-label">// System Architecture</div>
+  <div class="section-title">End-to-End Data Flow</div>
+  <div class="section-sub">This is the complete IoT pipeline. The simulation currently replicates steps 3–5 via the web interface.</div>
+
+  <div class="flow">
+
+    <!-- Node 1: RFID Card -->
+    <div class="flow-node">
+      <div class="node-box">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c1c2e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="5" width="20" height="14" rx="2"/>
+            <line x1="2" y1="10" x2="22" y2="10"/>
+          </svg>
+        </div>
+        <div class="node-label">RFID Card</div>
+      </div>
+      <div class="node-sub">Student ID card with embedded chip</div>
+    </div>
+
+    <!-- Arrow -->
+    <div class="flow-arrow">
+      <div style="display:flex;align-items:center;">
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="arrow-label">tap</div>
+    </div>
+
+    <!-- Node 2: RC522 Reader -->
+    <div class="flow-node">
+      <div class="node-box active">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c1c2e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="2" width="14" height="20" rx="2"/>
+            <line x1="12" y1="18" x2="12" y2="18" stroke-width="2"/>
+            <rect x="8" y="5" width="8" height="5" rx="1"/>
+          </svg>
+        </div>
+        <div class="node-label">RC522 Reader</div>
+      </div>
+      <div class="node-sub">Reads UID from card via RF signal</div>
+    </div>
+
+    <!-- Arrow -->
+    <div class="flow-arrow">
+      <div style="display:flex;align-items:center;">
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="arrow-label">SPI / UID</div>
+    </div>
+
+    <!-- Node 3: ESP32 -->
+    <div class="flow-node">
+      <div class="node-box active">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c1c2e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <line x1="9" y1="1" x2="9" y2="4"/>
+            <line x1="15" y1="1" x2="15" y2="4"/>
+            <line x1="9" y1="20" x2="9" y2="23"/>
+            <line x1="15" y1="20" x2="15" y2="23"/>
+            <line x1="20" y1="9" x2="23" y2="9"/>
+            <line x1="20" y1="14" x2="23" y2="14"/>
+            <line x1="1" y1="9" x2="4" y2="9"/>
+            <line x1="1" y1="14" x2="4" y2="14"/>
+          </svg>
+        </div>
+        <div class="node-label">ESP32</div>
+      </div>
+      <div class="node-sub">Validates UID, connects via Wi-Fi</div>
+    </div>
+
+    <!-- Arrow -->
+    <div class="flow-arrow">
+      <div style="display:flex;align-items:center;">
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="arrow-label">HTTP POST</div>
+    </div>
+
+    <!-- Node 4: Firebase -->
+    <div class="flow-node">
+      <div class="node-box">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c1c2e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <ellipse cx="12" cy="5" rx="9" ry="3"/>
+            <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/>
+            <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/>
+          </svg>
+        </div>
+        <div class="node-label">Firebase</div>
+      </div>
+      <div class="node-sub">Cloud database stores attendance records</div>
+    </div>
+
+    <!-- Arrow -->
+    <div class="flow-arrow">
+      <div style="display:flex;align-items:center;">
+        <div class="arrow-line"></div>
+        <div class="arrow-head"></div>
+      </div>
+      <div class="arrow-label">real-time</div>
+    </div>
+
+    <!-- Node 5: Dashboard -->
+    <div class="flow-node">
+      <div class="node-box">
+        <div class="node-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#7c1c2e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18"/>
+            <path d="M9 21V9"/>
+          </svg>
+        </div>
+        <div class="node-label">Dashboard</div>
+      </div>
+      <div class="node-sub">Faculty views live attendance analytics</div>
+    </div>
+
+  </div>
+
+  <!-- Simulation note below flow -->
+  <div style="text-align:center; margin-top:8px;">
+    <span style="font-family:'IBM Plex Mono',monospace; font-size:11px; color:var(--text-lo);">
+      ★ &nbsp;Steps highlighted in
+      <span style="color:var(--maroon); font-weight:600;">maroon</span>
+      are hardware components — currently simulated via web input
+    </span>
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- STEP BY STEP -->
+<div class="section">
+  <div class="section-label">// Step-by-Step Flow</div>
+  <div class="section-title">How Each Step Works</div>
+  <div class="section-sub">A detailed breakdown of every stage in the system pipeline.</div>
+
+  <div class="steps">
+
+    <div class="step-card">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Student Taps RFID Card</div>
+        <div class="step-desc">The student brings their RFID card close to the RC522 reader. The reader emits a 13.56 MHz radio frequency signal that powers the card's embedded chip and reads the unique 8-character UID stored on it.</div>
+        <span class="step-tag maroon">Hardware Layer</span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">ESP32 Receives & Validates the UID</div>
+        <div class="step-desc">The RC522 sends the UID to the ESP32 via SPI protocol. The ESP32 runs validation logic — checking if the UID is registered, if it falls within the allowed time window, and if it's a duplicate scan from the same session.</div>
+        <span class="step-tag maroon">Hardware Layer</span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">ESP32 Sends Data to Firebase via Wi-Fi</div>
+        <div class="step-desc">If the UID passes validation, the ESP32 connects to the internet over Wi-Fi and makes an HTTP POST request to the Firebase Realtime Database — sending the student UID, timestamp, and attendance status.</div>
+        <span class="step-tag">Cloud Layer</span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Firebase Stores the Record in Real-Time</div>
+        <div class="step-desc">Firebase instantly stores the attendance record and pushes the update to all connected clients. No page refresh is needed — the data appears live on the faculty dashboard the moment the card is tapped.</div>
+        <span class="step-tag green">Cloud Layer</span>
+      </div>
+    </div>
+
+    <div class="step-card">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Faculty Dashboard Updates Live</div>
+        <div class="step-desc">The web dashboard listens to Firebase in real-time. It updates the attendance table, stat cards, and percentage bars automatically. Faculty can filter by present/absent, search students by name or reg number, and export a CSV report.</div>
+        <span class="step-tag green">Web Layer · Currently Active</span>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<hr class="divider"/>
+
+<!-- HARDWARE SECTION -->
+<div class="section">
+  <div class="section-label">// Hardware Components</div>
+  <div class="section-title">Physical Components in Final System</div>
+  <div class="section-sub">These are the actual hardware components that will be used once procurement is complete. The software is fully ready to interface with them.</div>
+
+  <div class="hw-grid">
+
+    <!-- ESP32 -->
+    <div class="hw-card">
+      <div class="hw-img-box">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/ESP32_Espressif_ESP-WROOM-32_Dev_Board.jpg/320px-ESP32_Espressif_ESP-WROOM-32_Dev_Board.jpg"
+          alt="ESP32 Development Board"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+        />
+        <svg class="hw-svg" style="display:none;" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="20" width="60" height="40" rx="4" fill="#f0e9e0" stroke="#c9b89e" stroke-width="1.5"/>
+          <rect x="18" y="28" width="44" height="24" rx="2" fill="#ddd0c0"/>
+          <rect x="22" y="32" width="36" height="16" rx="1" fill="#c9b89e"/>
+          <circle cx="26" cy="40" r="3" fill="#7c1c2e" opacity="0.5"/>
+          <circle cx="54" cy="40" r="3" fill="#7c1c2e" opacity="0.5"/>
+        </svg>
+      </div>
+      <div class="hw-info">
+        <div class="hw-name">ESP32 Dev Board</div>
+        <div class="hw-desc">Dual-core microcontroller with built-in Wi-Fi and Bluetooth. Acts as the brain of the system — reads UID from RC522 and POSTs data to Firebase.</div>
+        <div class="hw-spec">
+          <span>· Xtensa LX6 @ 240MHz</span>
+          <span>· 802.11 b/g/n Wi-Fi</span>
+          <span>· SPI / I2C / UART support</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RC522 -->
+    <div class="hw-card">
+      <div class="hw-img-box">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8f/RFID_RC522.jpg/320px-RFID_RC522.jpg"
+          alt="RC522 RFID Reader Module"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+        />
+        <svg class="hw-svg" style="display:none;" viewBox="0 0 80 80" fill="none">
+          <rect x="8" y="16" width="64" height="48" rx="4" fill="#f0e9e0" stroke="#c9b89e" stroke-width="1.5"/>
+          <rect x="16" y="24" width="20" height="32" rx="2" fill="#ddd0c0"/>
+          <circle cx="55" cy="40" r="16" fill="none" stroke="#7c1c2e" stroke-width="1.5" opacity="0.4"/>
+          <circle cx="55" cy="40" r="10" fill="none" stroke="#7c1c2e" stroke-width="1.5" opacity="0.5"/>
+          <circle cx="55" cy="40" r="4" fill="#7c1c2e" opacity="0.4"/>
+        </svg>
+      </div>
+      <div class="hw-info">
+        <div class="hw-name">RC522 RFID Reader</div>
+        <div class="hw-desc">13.56 MHz RFID reader/writer module. Detects MIFARE cards within ~5cm range and transmits the unique UID to ESP32 over SPI.</div>
+        <div class="hw-spec">
+          <span>· 13.56 MHz frequency</span>
+          <span>· SPI interface (up to 10Mbps)</span>
+          <span>· Read range: ~5cm</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RFID Card -->
+    <div class="hw-card">
+      <div class="hw-img-box">
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/RFID_Tags.jpg/320px-RFID_Tags.jpg"
+          alt="RFID Cards and Tags"
+          onerror="this.style.display='none'; this.nextElementSibling.style.display='block';"
+        />
+        <svg class="hw-svg" style="display:none;" viewBox="0 0 80 80" fill="none">
+          <rect x="8" y="20" width="64" height="40" rx="6" fill="#f0e9e0" stroke="#c9b89e" stroke-width="1.5"/>
+          <rect x="16" y="30" width="18" height="14" rx="2" fill="#c9b89e"/>
+          <line x1="42" y1="30" x2="64" y2="30" stroke="#ddd0c0" stroke-width="2"/>
+          <line x1="42" y1="36" x2="64" y2="36" stroke="#ddd0c0" stroke-width="2"/>
+          <line x1="42" y1="42" x2="56" y2="42" stroke="#ddd0c0" stroke-width="2"/>
+        </svg>
+      </div>
+      <div class="hw-info">
+        <div class="hw-name">MIFARE RFID Card</div>
+        <div class="hw-desc">Each student is assigned a MIFARE Classic 1K card with a unique 4-byte UID. No battery required — powered by the reader's RF field.</div>
+        <div class="hw-spec">
+          <span>· MIFARE Classic 1K</span>
+          <span>· 4-byte unique UID</span>
+          <span>· Passive (no battery)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- SIMULATION NOTE -->
+<div class="sim-note" style="padding:0 24px;">
+  <div style="max-width:960px; margin:0 auto; width:100%; display:flex; gap:16px; align-items:flex-start; padding:20px 0;">
+    <div class="sim-note-icon">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+    </div>
+    <div>
+      <div class="sim-note-title">About This Simulation</div>
+      <div class="sim-note-text">
+        Since hardware procurement is pending, the current prototype simulates the ESP32 + RC522 layer through a web interface. Students enter their registration number (which maps to their RFID UID) manually — this is equivalent to the card tap event. All validation logic (duplicate detection, time-window checks) and the dashboard are fully functional and identical to what the hardware integration will produce. Once the ESP32 and RC522 are available, only the input source changes — the rest of the system remains exactly the same.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DEMO BUTTONS -->
+<div class="demo-row">
+  <a href="scan.html" class="demo-btn primary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="7" width="18" height="13" rx="2"/>
+      <path d="M8 7V5a2 2 0 0 1 4 0v2"/>
+    </svg>
+    Try Scan Simulation
+  </a>
+  <a href="dashboard.html" class="demo-btn secondary">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="2"/>
+      <path d="M3 9h18M9 21V9"/>
+    </svg>
+    View Dashboard
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot">RFID Smart Attendance System · CSE Project</div>
+  <div class="foot-mode">mode <span>simulation</span></div>
+</footer>
+
+</body>
+</html>
